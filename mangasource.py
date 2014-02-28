@@ -1,10 +1,9 @@
 import datetime
-import json
-import subprocess
 from urlparse import urljoin
 
 from app import db
 from models import Manga
+from utils import run_crawler
 
 #TODO: possible other sources: MangaDog, KissManga
 # chapter = namedtuple('chapter', 'text url date')
@@ -85,6 +84,9 @@ class MangaSource(object):
     # def parse_manga_list(self, page):
     #     """parses a Webpage object and returns a list of link namedtuples"""
     #     return page.iter_links(self.manga_list_xpath)
+
+    def fetch_mangas(self):
+        return run_crawler(self.__class__.__name__.lower())
 
     def get_mangas(self):
         """returns the list of mangas for this manga source"""
@@ -195,14 +197,6 @@ class MangaSource(object):
 
 class MangaReader(MangaSource):
     url = "http://www.mangareader.net/"
-
-    def fetch_mangas(self):
-        crawler_name = self.__class__.__name__.lower()
-        subprocess.Popen(["scrapy", "crawl", crawler_name, "-o",
-                          "results.json", "-t", "jsonlines"])
-        return [json.loads(x) for x in open("results.json").readlines()]
-
-#     list_url = "/alphabetical"
 #     manga_list_xpath = "//div.content_bloc2/div.series_col//li/a"
 #     chapter_list_xpath = "//table#listing//tr"
 #     chapter_list_elem_start = 1
@@ -223,8 +217,8 @@ class MangaReader(MangaSource):
 #                 chapter_page.xpath("//select#pageMenu/option")]
 
 
-# class AnimeA(MangaSource):
-#     url = "http://manga.animea.net/"
+class AnimeA(MangaSource):
+    url = "http://manga.animea.net/"
 #     list_url = "/browse.html"
 #     manga_list_xpath = "//ul.mangalist_plain/li/a"
 #     chapter_list_xpath = "//ul.chapters_list/li"
@@ -275,35 +269,10 @@ class MangaReader(MangaSource):
 #         return img_links
 
 
-# class OurManga(MangaSource):
-#     """
-#     NOTE: OurManga does not show the date when chapters are posted, so
-#     last_updated of any manga is always None
-#     needless to say, updating will not work with OurManga
-#     """
-#     url = "http://www.ourmanga.com/"
-#     list_url = "/directory/"
-#     manga_list_xpath = "//div.m_s_title/a"
-#     manga_list_start = 1
-#     chapter_list_xpath = "//div#manga_nareo/div/div[1]/a"
-#     chapter_list_start = 1
-#     image_xpath = "//div.inner_full_view//img"
-
-#     def parse_chapter(self, chapter):
-#         return (chapter.text, chapter.attrib["href"], None)
-
-#     def get_image_page_urls(self, chapter_page):
-#         #gotta fetch a stupid intermediary page
-#         chap_url1 = chapter_page.iter_links("//div#Summary/p[2]/a[2]").pop().\
-#                     url
-#         pages = self.get(chap_url1).xpath("//select[@name='page']/option")
-#         return [urljoin(chap_url1, p.attrib["value"]) for p in pages]
-
-
-# class MangaHere(MangaSource):
-#     url = "http://www.mangahere.com/"
-#     list_url = "/mangalist/"
-#     manga_list_xpath = "//div.list_manga//a.manga_info"
+class MangaHere(MangaSource):
+    url = "http://www.mangahere.com/"
+    # list_url = "/mangalist/"
+    # manga_list_xpath = "//div.list_manga//a.manga_info"
 #     chapter_list_xpath = "//div.detail_list//li"
 #     chapter_list_elem_end = -1
 #     image_xpath = "//img#image"
@@ -335,8 +304,8 @@ class MangaReader(MangaSource):
 #         return [urljoin(chap_url, "%s.html" % p) for p in range(1, pages + 1)]
 
 
-# class KissManga(MangaSource):
-#     url = "http://kissmanga.com/"
+class KissManga(MangaSource):
+    url = "http://kissmanga.com/"
 #     list_url = "/MangaList"
 #     manga_list_xpath = "//table.listing//tr/td[1]/a"
 #     manga_list_start = 1
