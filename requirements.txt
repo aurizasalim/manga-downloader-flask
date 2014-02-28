@@ -1,0 +1,4 @@
+Flask==0.10.1
+Flask-SQLAlchemy==1.0
+Scrapy==0.22.2
+SQLAlchemy==0.9.3

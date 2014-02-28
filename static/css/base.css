@@ -1,0 +1,52 @@
+/* item name colors */
+
+/* styles for item titles */
+.unique {
+    color: #af6025
+}
+
+.rare {
+    color: #ff7
+}
+
+.magic {
+    color: #88f
+}
+
+.gem {
+    color: #1ba29b
+}
+
+.quest {
+    color: #4ae63a
+}
+
+/* styles for requirements */
+
+.int {
+    color: #88f
+}
+
+.dex {
+    color: green
+}
+
+.str {
+    color: #BB0000
+}
+
+.unidentified {
+    color: #BB0000;
+    font-weight: bold;
+}
+
+/* resizing bootstrap popover */
+.popover {
+	max-width: 500px;
+	width: auto;
+}
+
+/* extra spacing between name and type for list view */
+ul.item_listing li h4 span:nth-child(2) {
+    background-color:red
+}
