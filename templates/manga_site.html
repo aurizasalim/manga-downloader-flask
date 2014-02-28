@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ manga_source_name }}{% endblock title %}
+
+{% block body %}
+    <h3>{{ manga_source_name }}</h3>
+
+    <table class="table striped bordered hover">
+        <thead>
+            <tr>
+                <th>&nbsp;</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for manga in mangas %}
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>{{ manga.text }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock body %}
