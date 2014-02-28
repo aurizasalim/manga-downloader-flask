@@ -3,20 +3,24 @@
 {% block title %}{{ manga_source_name }}{% endblock title %}
 
 {% block body %}
-    <h3>{{ manga_source_name }}</h3>
+    <div class="row">
+        <h3 class="pull-left" style="margin-top:10px">{{ manga_source_name }}</h3>
+        <a href="/site/{{ manga_source_name }}/update" class="btn btn-primary pull-right" role="button">Refresh List</a>
+    </div>
+
 
     <table class="table striped bordered hover">
         <thead>
             <tr>
-                <th>&nbsp;</th>
-                <th>Name</th>
+                <th>Fav</th>
+                <th><strong>Name</strong></th>
             </tr>
         </thead>
         <tbody>
             {% for manga in mangas %}
                 <tr>
                     <td>&nbsp;</td>
-                    <td>{{ manga.text }}</td>
+                    <td><a href="#">{{ manga.name }}</a></td>
                 </tr>
             {% endfor %}
         </tbody>

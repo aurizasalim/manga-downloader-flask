@@ -1,5 +1,4 @@
 *.pyc
 *.db
 env/
-gui.py
-webpage.py
+results.json

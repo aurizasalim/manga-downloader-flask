@@ -27,7 +27,7 @@
                         <ul class="dropdown-menu">
                             {% for manga_source_name in manga_sources %}
                                 <li>
-                                    <a href="/browse/{{ manga_source_name }}">{{ manga_source_name }}</a>
+                                    <a href="/site/{{ manga_source_name }}">{{ manga_source_name }}</a>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -49,18 +49,6 @@
         <script src="/static/js/jquery.min.js"></script>
         <script src="/static/js/bootstrap.min.js"></script>
         <script>
-            function is_mobile() {
-                var ua = window.navigator.userAgent;
-                return (window.screen.width <= 720) || (window.screen.height <= 720) || /Android/i.test(ua) || /iPhone/i.test(ua) || /iPad/i.test(ua);
-            };
-
-            $(function() {
-                $(".item_popover").popover({
-                    trigger: is_mobile() ? "click" : "hover"
-                });
-                {% block extrajs %}
-                {% endblock extrajs %}
-            });
         </script>
     </body>
 </html>
