@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ manga.name }}{% endblock title %}
+
+{% block body %}
+    <h3>{{ manga.name }}</h3>
+
+    <table class="table striped bordered hover">
+        <thead>
+            <tr>
+                <th><strong>Name</strong></th>
+                <th><strong>Date</strong></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chapter in chapters %}
+                <tr>
+                    <td>
+                        {{ chapter.name }}
+                        <input type="hidden" value="{{ chapter.link }}">
+                    </td>
+                    <td>
+                        {{ chapter.date.strftime('%d %b %Y') }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock body %}

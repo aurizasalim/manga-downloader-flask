@@ -5,7 +5,7 @@ from app import db
 from models import Manga
 from utils import run_crawler
 
-#TODO: possible other sources: MangaDog, KissManga
+#TODO: possible other sources: MangaDog, KissManga, MangaWall
 # chapter = namedtuple('chapter', 'text url date')
 
 
