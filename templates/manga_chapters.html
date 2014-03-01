@@ -5,9 +5,10 @@
 {% block body %}
     <h3>{{ manga.name }}</h3>
 
-    <table class="table striped bordered hover">
+    <table class="table table-striped table-bordered table-hover table-condensed">
         <thead>
             <tr>
+                <th><input type="checkbox"></th>
                 <th><strong>Name</strong></th>
                 <th><strong>Date</strong></th>
             </tr>
@@ -16,8 +17,10 @@
             {% for chapter in chapters %}
                 <tr>
                     <td>
+                        <input type="checkbox" name="selected_chapters" value="{{ chapter.link }}">
+                    </td>
+                    <td>
                         {{ chapter.name }}
-                        <input type="hidden" value="{{ chapter.link }}">
                     </td>
                     <td>
                         {{ chapter.date.strftime('%d %b %Y') }}

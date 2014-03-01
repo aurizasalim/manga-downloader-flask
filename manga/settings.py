@@ -13,3 +13,12 @@ NEWSPIDER_MODULE = 'manga.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'manga (+http://www.yourdomain.com)'
+
+HTTPCACHE_ENABLED = True
+HTTPCACHE_STORAGE = "scrapy.contrib.httpcache.FilesystemCacheStorage"
+HTTPCACHE_EXPIRATION_SECS = 60 * 60 * 24  # cache for a day
+
+if HTTPCACHE_ENABLED:
+    DOWNLOADER_MIDDLEWARES = {
+        'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 900,
+    }
