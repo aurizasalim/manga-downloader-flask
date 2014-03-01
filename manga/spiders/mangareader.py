@@ -60,3 +60,37 @@ class MangaReaderChapterSpider(Spider):
                                     cells[-1].xpath('text()').extract()[0])
             items.append(item)
         return items
+
+
+class MangaReaderImageSpider(Spider):
+    name = "mangareader_images"
+
+    def __init__(self, chapter_urls_file):
+        """
+        chapter_urls_file is a file containing the chapters to download,
+        one on each line
+        """
+
+        base_url = "http://www.mangareader.net"
+        self.start_urls = []
+        with open(chapter_urls_file) as fp:
+            for chapter in fp:
+                self.start_urls.append(urljoin_rfc(base_url, chapter))
+
+    def parse(self, response):
+        # hxs = Selector(response)
+
+        # rows = hxs.xpath("//table[@id='listing']//tr")
+
+        # items = []
+        # for row in rows:
+        #     item = MangaChapterItem()
+        #     cells = row.xpath("td")
+        #     if not cells:
+        #         continue
+
+        #     item['name'], item['link'] = extract_link(cells[0].xpath("a"))
+        #     item['date'] = self.parsedate(
+        #                             cells[-1].xpath('text()').extract()[0])
+        #     items.append(item)
+        return []

@@ -1,6 +1,7 @@
-from flask import render_template, redirect
+from flask import render_template, redirect, request
 
 import datetime
+import tempfile
 
 from app import app, db
 from models import Manga
@@ -84,6 +85,31 @@ def manga_chapters(manga_id):
     return render_template('manga_chapters.html',
                            manga=manga,
                            chapters=chapters)
+
+
+@app.route('/manga/<int:manga_id>/chapters/download/', methods=["POST"])
+def download_chapters(manga_id):
+    """displays all the manga available for a given source"""
+    form = request.form
+    manga = Manga.query.get(manga_id)
+
+    chapters = form.getlist("selected_chapters")
+    if chapters:
+        #dump the data into a file so that it can be read by the scrapy image
+        #crawler
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            fp.write("\n".join(chapters))
+            fp.close()
+
+            #start fetching the images
+            crawler_name = "%s_images" % manga.mangasite.lower()
+            run_crawler(crawler_name, chapter_urls_file=fp.name)
+
+            #TODO: update last_updated timestamp for manga object
+
+    #go back to the original page
+    return redirect("/manga/%s" % manga_id)
+
 
 if __name__ == '__main__':
     db.create_all()

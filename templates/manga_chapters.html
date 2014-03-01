@@ -3,30 +3,82 @@
 {% block title %}{{ manga.name }}{% endblock title %}
 
 {% block body %}
-    <h3>{{ manga.name }}</h3>
+    <form action="/manga/{{ manga.id }}/chapters/download/" method="post">
+        <div class="row">
+            <h3 class="pull-left" style="margin-top:10px">{{ manga.name }}</h3>
+            <input type="submit" class="btn btn-primary pull-right" value="Download">
+        </div>
 
-    <table class="table table-striped table-bordered table-hover table-condensed">
-        <thead>
-            <tr>
-                <th><input type="checkbox"></th>
-                <th><strong>Name</strong></th>
-                <th><strong>Date</strong></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for chapter in chapters %}
+        <table class="table table-striped table-bordered table-hover table-condensed">
+            <thead>
                 <tr>
-                    <td>
-                        <input type="checkbox" name="selected_chapters" value="{{ chapter.link }}">
-                    </td>
-                    <td>
-                        {{ chapter.name }}
-                    </td>
-                    <td>
-                        {{ chapter.date.strftime('%d %b %Y') }}
-                    </td>
+                    <th style="text-align:center"><input type="checkbox"></th>
+                    <th><strong>Name</strong></th>
+                    <th><strong>Date</strong></th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for chapter in chapters %}
+                    <tr>
+                        <td style="text-align:center">
+                            <input type="checkbox" name="selected_chapters" value="{{ chapter.link }}">
+                        </td>
+                        <td>
+                            {{ chapter.name }}
+                        </td>
+                        <td>
+                            {{ chapter.date.strftime('%d %b %Y') }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="row">
+            <input type="submit" class="btn btn-primary pull-right" value="Download">
+        </div>
+    </form>
 {% endblock body %}
+
+<script>
+{% block extrajs %}
+    //check and uncheck all
+    $("th input[type=checkbox]").click(function(e) {
+        var checked = $(e.currentTarget).prop("checked");
+
+        $("table td input:checkbox").attr({checked: checked});
+
+        return $("table tbody tr").each(function(i, row) {
+            var $row = $(row);
+            return $row.toggleClass("selected", $row.find("input:checkbox").prop("checked"));
+        });
+    });
+
+    //handle shift clicking of checkboxes
+    var last_checked = null;
+    $("td input[type=checkbox]").click(function(e) {
+        var end, start, tr;
+        var elem = $(e.currentTarget);
+        var checked = elem.prop("checked");
+
+        if (last_checked == null) {
+            tr = elem.closest("tbody tr");
+            last_checked = tr.index();
+            tr.toggleClass("selected", checked);
+            return;
+        }
+
+        start = elem.closest("tbody tr").index();
+        if (e.shiftKey) {
+            end = last_checked;
+            $("table td input:checkbox").slice(Math.min(start, end), Math.max(start, end) + 1).attr({checked: checked});
+        }
+
+        last_checked = start;
+        return $("table tbody tr").each(function(i, row) {
+            var $row = $(row);
+            return $row.toggleClass("selected", $row.find("input:checkbox").prop("checked"));
+        });
+    });
+{% endblock extrajs %}
+</script>
