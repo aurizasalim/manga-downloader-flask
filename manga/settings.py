@@ -4,7 +4,8 @@
 # default. All the other settings are documented here:
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
-#
+import os
+
 
 BOT_NAME = 'manga'
 
@@ -22,3 +23,8 @@ if HTTPCACHE_ENABLED:
     DOWNLOADER_MIDDLEWARES = {
         'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 900,
     }
+
+
+#handle the image pipelines
+ITEM_PIPELINES = {'scrapy.contrib.pipeline.images.ImagesPipeline': 1}
+IMAGES_STORE = os.path.abspath(os.path.join(os.curdir, "images"))

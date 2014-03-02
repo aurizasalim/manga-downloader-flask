@@ -1,11 +1,12 @@
 from scrapy.selector import Selector
 from scrapy.spider import Spider
 from scrapy.utils.url import urljoin_rfc
+from scrapy.http.request import Request
 
 import datetime
 
 from models import Manga
-from manga.items import MangaItem, MangaChapterItem
+from manga.items import MangaItem, MangaChapterItem, MangaImagesItem
 from utils import extract_link
 
 
@@ -78,19 +79,30 @@ class MangaReaderImageSpider(Spider):
                 self.start_urls.append(urljoin_rfc(base_url, chapter))
 
     def parse(self, response):
-        # hxs = Selector(response)
+        hxs = Selector(response)
 
-        # rows = hxs.xpath("//table[@id='listing']//tr")
+        base_url = "http://www.mangareader.net"
+        page_links = hxs.xpath(
+                            "//select[@id='pageMenu']/option/@value").extract()
 
-        # items = []
-        # for row in rows:
-        #     item = MangaChapterItem()
-        #     cells = row.xpath("td")
-        #     if not cells:
-        #         continue
+        item = MangaImagesItem()
+        item["image_urls"] = []
 
-        #     item['name'], item['link'] = extract_link(cells[0].xpath("a"))
-        #     item['date'] = self.parsedate(
-        #                             cells[-1].xpath('text()').extract()[0])
-        #     items.append(item)
-        return []
+        #fetch the images from all the pages
+        for p in page_links:
+            page = urljoin_rfc(base_url, p)
+            request = Request(page, callback=self.parse_img_url)
+            request.meta['item'] = item  # pass the item to the callback
+            yield request
+
+        yield item
+
+    def parse_img_url(self, response):
+        """returns the image url given the response"""
+        hxs = Selector(response)
+        img_url = hxs.xpath("//img[@id='img']/@src").extract()[0]
+
+        #use the item passed to the callback
+        item = response.meta['item']
+        item['image_urls'].append(img_url)
+        return item

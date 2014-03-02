@@ -34,4 +34,5 @@ nosetests.xml
 *.db
 env/
 .scrapy/
+images/
 results.json

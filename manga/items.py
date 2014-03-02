@@ -26,3 +26,9 @@ class MangaChapterItem(BaseItem):
     name = Field()
     link = Field()
     date = Field()
+
+
+class MangaImagesItem(BaseItem):
+    """utilises the image pipeline of scrapy"""
+    image_urls = Field()
+    images = Field()
