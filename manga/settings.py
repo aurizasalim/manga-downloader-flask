@@ -26,5 +26,12 @@ if HTTPCACHE_ENABLED:
 
 
 #handle the image pipelines
-ITEM_PIPELINES = {'scrapy.contrib.pipeline.images.ImagesPipeline': 1}
+ITEM_PIPELINES = {'manga.pipelines.KindlePipeline': 1}
 IMAGES_STORE = os.path.abspath(os.path.join(os.curdir, "images"))
+#modified the thumbnail options to accept a dict of options
+IMAGES_THUMBS = {
+    'kindle': {
+        'size': (758, 1024),
+        'grayscale': True,
+    },
+}
