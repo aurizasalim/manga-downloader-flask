@@ -5,6 +5,7 @@
 
 
 from scrapy.contrib.pipeline.images import ImagesPipeline, ImageException
+from scrapy.http.request import Request
 from cStringIO import StringIO
 from PIL import Image, ImageOps
 
@@ -14,6 +15,18 @@ class MangaImagesPipeline(ImagesPipeline):
     pipeline built on top of the scrapy images pipeline that handles conversion
     of images with extended options
     """
+    def has_all_images(self, item):
+        """does the item contain all the image urls to be downloaded?"""
+        image_urls = item.get(self.IMAGES_URLS_FIELD, [])
+        return item.get("total_images", -1) == len(image_urls)
+
+    def get_media_requests(self, item, info):
+        image_urls = item.get(self.IMAGES_URLS_FIELD, [])
+
+        #don't have all the images, don't bother
+        if not self.has_all_images(item):
+            image_urls = []
+        return [Request(x) for x in image_urls]
 
     def get_images(self, response, request, info):
         path = self.file_path(request, response=response, info=info)
@@ -80,5 +93,7 @@ class KindlePipeline(MangaImagesPipeline):
     """
 
     def item_completed(self, results, item, info):
-        item = super(KindlePipeline, self).item_completed(results, item, info)
+        if self.has_all_images(item):
+            import q
+            q(results)
         return item

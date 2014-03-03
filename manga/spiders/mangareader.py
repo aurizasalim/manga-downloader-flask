@@ -86,7 +86,8 @@ class MangaReaderImageSpider(Spider):
                             "//select[@id='pageMenu']/option/@value").extract()
 
         item = MangaImagesItem()
-        item["image_urls"] = []
+        item["total_images"] = len(page_links)
+        item['image_urls'] = []
 
         #fetch the images from all the pages
         for p in page_links:
