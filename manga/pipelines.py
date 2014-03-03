@@ -6,8 +6,12 @@
 
 from scrapy.contrib.pipeline.images import ImagesPipeline, ImageException
 from scrapy.http.request import Request
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 from PIL import Image, ImageOps
+from jinja2 import Environment, FileSystemLoader
 
 
 class MangaImagesPipeline(ImagesPipeline):
@@ -93,7 +97,36 @@ class KindlePipeline(MangaImagesPipeline):
     """
 
     def item_completed(self, results, item, info):
-        if self.has_all_images(item):
-            import q
-            q(results)
+        if not self.has_all_images(item):
+            return item
+
+        jinja2 = Environment(loader=FileSystemLoader("templates"))
+        #add the globals to jinja
+        # jinja2.globals.update(zip=zip)
+        page_tmpl = jinja2.get_template("mobi/page.html")
+
+        #got all the images, begin processing
+        thumb_pages = []
+        for thumb_name in self.THUMBS.iterkeys():
+            for i, data in enumerate(results):
+                fname = data[1]["path"].split("/")[-1][:-4]
+                #write the page for the image
+                thumb_pages.append(
+                    self.write_image_page(thumb_name, i, fname, page_tmpl)
+                )
+
         return item
+
+    def write_image_page(self, thumb_name, thumb_no, fname, tmpl):
+        """
+        writes the image page and returns the path of the html file written to
+        """
+        #name of thumbnail html file
+        thumb_page = 'thumbs/%s/%s.html' % (thumb_name, fname)
+
+        buf = StringIO(tmpl.render({
+            "image_no": thumb_no,
+            "image_name": fname,
+        }))
+        self.store.persist_file(thumb_page, buf, None)
+        return thumb_page
