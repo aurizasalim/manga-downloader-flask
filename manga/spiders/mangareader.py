@@ -4,6 +4,7 @@ from scrapy.utils.url import urljoin_rfc
 from scrapy.http.request import Request
 
 import datetime
+import json
 
 from models import Manga
 from manga.items import MangaItem, MangaChapterItem, MangaImagesItem
@@ -66,7 +67,7 @@ class MangaReaderChapterSpider(Spider):
 class MangaReaderImageSpider(Spider):
     name = "mangareader_images"
 
-    def __init__(self, chapter_urls_file):
+    def __init__(self, chapter_data_file):
         """
         chapter_urls_file is a file containing the chapters to download,
         one on each line
@@ -74,9 +75,12 @@ class MangaReaderImageSpider(Spider):
 
         base_url = "http://www.mangareader.net"
         self.start_urls = []
-        with open(chapter_urls_file) as fp:
+        self.chapter_data = []
+        with open(chapter_data_file) as fp:
             for chapter in fp:
-                self.start_urls.append(urljoin_rfc(base_url, chapter))
+                chapter = json.loads(chapter)
+                self.chapter_data.append(chapter)
+                self.start_urls.append(urljoin_rfc(base_url, chapter["link"]))
 
     def parse(self, response):
         hxs = Selector(response)
@@ -86,6 +90,7 @@ class MangaReaderImageSpider(Spider):
                             "//select[@id='pageMenu']/option/@value").extract()
 
         item = MangaImagesItem()
+        item["chapter_data"] = self.chapter_data
         item["total_images"] = len(page_links)
         item['image_urls'] = []
 

@@ -42,13 +42,41 @@
         </nav>
 
         <div class="container">
-        {% block body %}
-        {% endblock body %}
+            <div class="spinner"></div>
+            {% block body %}
+            {% endblock body %}
         </div>
 
         <script src="/static/js/jquery.min.js"></script>
         <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/spin.min.js"></script>
+        <script src="/static/js/jquery.spin.js"></script>
         <script>
+            window.render_spinner = function (start) {
+                var elem = $("div.container");
+                var $spinner;
+                if (start == null) {
+                    start = true;
+                }
+                $spinner = elem.children("div.spinner");
+                if (start) {
+                    return $spinner.removeClass("hide").css({
+                        width: elem.width(),
+                        height: elem.height(),
+                        position: "absolute",
+                        top: elem.offset().top,
+                        left: elem.offset().left,
+                        opacity: 0.5,
+                        display: "block",
+                        'z-index': 1000,
+                        "background-color": "#000"
+                    }).spin();
+                }
+                else {
+                    return $spinner.addClass("hide").css("display", "none").stop();
+                }
+            };
+
             $(function() {
                 {% block extrajs %}
                 {% endblock extrajs %}

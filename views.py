@@ -1,6 +1,8 @@
 from flask import render_template, redirect, request
+from flask.views import View
 
 import datetime
+import json
 import tempfile
 
 from app import app, db
@@ -77,6 +79,12 @@ def manga_chapters(manga_id):
     chap_list = sorted(chap_list,
                        key=lambda c: (int(c["date"]), c["name"]),
                        reverse=True)
+
+    #context for json data that will be submitted later
+    json_data = [dict(c, manga_id=manga_id, manga_site=manga.mangasite)
+                 for c in chap_list]
+
+    #context for displaying the tables
     for chapter in chap_list:
         chapter["date"] = datetime.datetime.fromtimestamp(
                                                 int(chapter["date"])).date()
@@ -84,31 +92,40 @@ def manga_chapters(manga_id):
 
     return render_template('manga_chapters.html',
                            manga=manga,
-                           chapters=chapters)
+                           chapters=chapters,
+                           json_data=json_data)
 
 
-@app.route('/manga/<int:manga_id>/chapters/download/', methods=["POST"])
-def download_chapters(manga_id):
-    """displays all the manga available for a given source"""
-    form = request.form
-    manga = Manga.query.get(manga_id)
+class DownloadChapterView(View):
+    """downloads manga"""
+    methods = ['POST']
 
-    chapters = form.getlist("selected_chapters")
-    if chapters:
+    def dispatch_request(self):
+        chapters = request.json
         #dump the data into a file so that it can be read by the scrapy image
         #crawler
         with tempfile.NamedTemporaryFile(delete=False) as fp:
-            fp.write("\n".join(chapters))
+            fp.write("\n".join(json.dumps(c) for c in chapters))
             fp.close()
 
+            #TODO: groupby crawler
+            mangasite = chapters[0]["manga_site"]
             #start fetching the images
-            crawler_name = "%s_images" % manga.mangasite.lower()
-            run_crawler(crawler_name, chapter_urls_file=fp.name)
+            crawler_name = "%s_images" % mangasite.lower()
+            run_crawler(crawler_name, chapter_data_file=fp.name)
 
             #TODO: update last_updated timestamp for manga object
+        return "success"
 
-    #go back to the original page
-    return redirect("/manga/%s" % manga_id)
+    def is_run_complete(self, results):
+        """determines if a run is completed given results from a crawler run"""
+        for r in results:
+            if r["total_images"] != len(r["image_urls"]):
+                return False
+        return True
+
+app.add_url_rule('/manga/download/',
+                 view_func=DownloadChapterView.as_view('manga_download'))
 
 
 if __name__ == '__main__':

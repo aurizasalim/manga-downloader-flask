@@ -30,7 +30,7 @@ class MangaChapterItem(BaseItem):
 
 class MangaImagesItem(BaseItem):
     """utilises the image pipeline of scrapy"""
-    chapter_name = Field()
+    chapter_data = Field()
     image_urls = Field()
     #use for hacking around the image pipeline from being triggered
     total_images = Field()

@@ -3,7 +3,7 @@
 {% block title %}{{ manga.name }}{% endblock title %}
 
 {% block body %}
-    <form action="/manga/{{ manga.id }}/chapters/download/" method="post">
+    <form id="download_manga_form" action="/manga/download/" method="post">
         <div class="row">
             <h3 class="pull-left" style="margin-top:10px">{{ manga.name }}</h3>
             <input type="submit" class="btn btn-primary pull-right" value="Download">
@@ -42,6 +42,8 @@
 
 <script>
 {% block extrajs %}
+   var chapters = {{ json_data|tojson|safe }};
+
     //check and uncheck all
     $("th input[type=checkbox]").click(function(e) {
         var checked = $(e.currentTarget).prop("checked");
@@ -80,5 +82,36 @@
             return $row.toggleClass("selected", $row.find("input:checkbox").prop("checked"));
         });
     });
+
+    //handle the form submission
+    $("#download_manga_form").submit(function(e) {
+        var form = $("#download_manga_form")
+        e.preventDefault();
+
+        //select the relevant chapters
+        var selected_chapters = []
+        $("table td input[type=checkbox]").each(function(idx, chkbox) {
+            if ($(chkbox).prop("checked")===true) {
+                selected_chapters.push(chapters[idx]);
+            }
+        });
+
+        //only do work if we need to
+        if (selected_chapters.length > 0) {
+            render_spinner();
+
+            //do the actual submission via a JSON post
+            $.ajax({
+                type: "POST",
+                url: form.prop("action"),
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(selected_chapters),
+                dataType: "html",
+                success: function() { render_spinner(false); },
+                error: function() { console.error("FORM SUBMISSION ERROR"); }
+            });
+        }
+    });
+
 {% endblock extrajs %}
 </script>
