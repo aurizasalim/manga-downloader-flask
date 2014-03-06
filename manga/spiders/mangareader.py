@@ -90,7 +90,7 @@ class MangaReaderImageSpider(Spider):
                             "//select[@id='pageMenu']/option/@value").extract()
 
         item = MangaImagesItem()
-        item["chapter_data"] = self.chapter_data
+        item["chapter_url"] = response.url
         item["total_images"] = len(page_links)
         item['image_urls'] = []
 

@@ -5,6 +5,7 @@
 
 
 from scrapy.contrib.pipeline.images import ImagesPipeline, ImageException
+from scrapy.exceptions import DropItem
 from scrapy.http.request import Request
 try:
     from cStringIO import StringIO
@@ -95,10 +96,20 @@ class KindlePipeline(MangaImagesPipeline):
     """
     pipeline for handling images suitable for output to a kindle
     """
+    def __init__(self, *args, **kwargs):
+        super(KindlePipeline, self).__init__(*args, **kwargs)
+        self.chapter_urls = set()
 
     def item_completed(self, results, item, info):
+        #make sure the item is complete
         if not self.has_all_images(item):
-            return item
+            raise DropItem("Item Incomplete")
+
+        #don't bother processing twice
+        if item["chapter_url"] in self.chapter_urls:
+            raise DropItem("Item Duplicate")
+        else:
+            self.chapter_urls.add(item["chapter_url"])
 
         jinja2 = Environment(loader=FileSystemLoader("templates"))
         #add the globals to jinja
@@ -114,7 +125,6 @@ class KindlePipeline(MangaImagesPipeline):
                 thumb_pages.append(
                     self.write_image_page(thumb_name, i, fname, page_tmpl)
                 )
-
         return item
 
     def write_image_page(self, thumb_name, thumb_no, fname, tmpl):
