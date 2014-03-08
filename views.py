@@ -7,7 +7,7 @@ import tempfile
 
 from app import app, db
 from models import Manga
-from utils import run_crawler
+from utils import run_crawler, jinja_template
 
 
 MANGA_SOURCES = ["MangaReader", "MangaHere", "AnimeA", "KissManga"]
@@ -81,8 +81,8 @@ def manga_chapters(manga_id):
                        reverse=True)
 
     #context for json data that will be submitted later
-    json_data = [dict(c, manga_id=manga_id, manga_site=manga.mangasite)
-                 for c in chap_list]
+    json_data = [dict(c, manga_id=manga_id, manga_site=manga.mangasite,
+                      manga_name=manga.name) for c in chap_list]
 
     #context for displaying the tables
     for chapter in chap_list:
@@ -101,28 +101,74 @@ class DownloadChapterView(View):
     methods = ['POST']
 
     def dispatch_request(self):
-        chapters = request.json
+        #clear the chapters file
+        open("chapters.json", "w").close()
+
         #dump the data into a file so that it can be read by the scrapy image
         #crawler
+        #TODO: groupby crawler
+        chapters = request.json
+        manga_name = "manga_name"
+        self.write_images_html(chapters)
+        self.write_ncx(manga_name)
+        self.write_opf(manga_name)
+
+        #TODO: update last_updated timestamp for manga object
+        return "success"
+
+    def write_images_html(self, chapters):
+        """
+        fetches the images and writes the corresponding html page for each
+        image using the customized scrapy images pipeline
+
+        takes the chapters data in the format from the request as an argument
+        """
         with tempfile.NamedTemporaryFile(delete=False) as fp:
             fp.write("\n".join(json.dumps(c) for c in chapters))
             fp.close()
 
-            #TODO: groupby crawler
             mangasite = chapters[0]["manga_site"]
             #start fetching the images
             crawler_name = "%s_images" % mangasite.lower()
             run_crawler(crawler_name, chapter_data_file=fp.name)
 
-            #TODO: update last_updated timestamp for manga object
-        return "success"
+    def write_ncx(self, manga_name):
+        """write the ncx file, using the data from chapters.json"""
+        ncx_tmpl = jinja_template("mobi/ncx.xml")
 
-    def is_run_complete(self, results):
-        """determines if a run is completed given results from a crawler run"""
-        for r in results:
-            if r["total_images"] != len(r["image_urls"]):
-                return False
-        return True
+        context = {
+            "manga_name": manga_name,
+            "chapters": [],
+        }
+        with open("chapters.json") as fp:
+            for line in fp:
+                chapter_data = json.loads(line)
+                context["chapters"].append({
+                    "name": chapter_data["item"]["chapter_name"],
+                    "cover": chapter_data["results"][0]  # first page
+                })
+
+        with open("images/%s.ncx" % manga_name, "w") as fp:
+            fp.write(ncx_tmpl.render(context))
+
+    def write_opf(self, manga_name):
+        """write the opf file, using the data from chapters.json"""
+        opf_tmpl = jinja_template("mobi/opf.xml")
+
+        context = {
+            "manga_name": manga_name,
+            "chapters": [],
+        }
+        with open("chapters.json") as fp:
+            for line in fp:
+                chapter_data = json.loads(line)
+                context["chapters"].append({
+                    "name": chapter_data["item"]["chapter_name"],
+                    "pages": chapter_data["results"]
+                })
+
+        with open("images/%s.opf" % manga_name, "w") as fp:
+            fp.write(opf_tmpl.render(context))
 
 app.add_url_rule('/manga/download/',
                  view_func=DownloadChapterView.as_view('manga_download'))

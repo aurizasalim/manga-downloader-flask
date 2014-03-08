@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx version="2005-1" xml:lang="en-US" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+	<head>
+        <meta name="dtb:uid" content="{{ manga_name }}"/>
+		<meta name="dtb:depth" content="2"/>
+		<meta name="dtb:totalPageCount" content="0"/>
+		<meta name="dtb:maxPageNumber" content="0"/>
+	</head>
+    <docTitle><text>{{ manga_name }}</text></docTitle>
+    {#<docAuthor><text>Walter Crane</text></docAuthor>#}
+    {% for chapter in chapters %}
+	<navMap>
+        <navPoint class="other" id="cover_{{ loop.index }}" playOrder="{{ loop.index }}">
+            <navLabel><text>{{ chapter.name }}</text></navLabel>
+            <content src="{{ chapter.cover }}"/>
+		</navPoint>
+	</navMap>
+    {% endfor %}
+</ncx>

@@ -108,7 +108,10 @@
                 data: JSON.stringify(selected_chapters),
                 dataType: "html",
                 success: function() { render_spinner(false); },
-                error: function() { console.error("FORM SUBMISSION ERROR"); }
+                error: function() {
+                    console.error("FORM SUBMISSION ERROR");
+                    render_spinner(false);
+                }
             });
         }
     });

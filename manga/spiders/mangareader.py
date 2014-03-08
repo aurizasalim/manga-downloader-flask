@@ -91,6 +91,8 @@ class MangaReaderImageSpider(Spider):
 
         item = MangaImagesItem()
         item["chapter_url"] = response.url
+        item["chapter_name"] = hxs.xpath("//div[@id='mangainfo']//h1/text()")\
+                                .extract()[0]
         item["total_images"] = len(page_links)
         item['image_urls'] = []
 

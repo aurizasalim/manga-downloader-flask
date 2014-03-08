@@ -36,4 +36,5 @@ env/
 .scrapy/
 images/
 ComicsSample/
+chapters.json
 results.json

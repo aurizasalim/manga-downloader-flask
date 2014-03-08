@@ -3,6 +3,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
+import json
 
 from scrapy.contrib.pipeline.images import ImagesPipeline, ImageException
 from scrapy.exceptions import DropItem
@@ -12,7 +13,8 @@ try:
 except ImportError:
     from StringIO import StringIO
 from PIL import Image, ImageOps
-from jinja2 import Environment, FileSystemLoader
+
+from utils import jinja_template
 
 
 class MangaImagesPipeline(ImagesPipeline):
@@ -101,6 +103,10 @@ class KindlePipeline(MangaImagesPipeline):
         self.chapter_urls = set()
 
     def item_completed(self, results, item, info):
+        #not part of the image pipeline, just continue
+        if self.IMAGES_URLS_FIELD not in item:
+            return item
+
         #make sure the item is complete
         if not self.has_all_images(item):
             raise DropItem("Item Incomplete")
@@ -111,12 +117,8 @@ class KindlePipeline(MangaImagesPipeline):
         else:
             self.chapter_urls.add(item["chapter_url"])
 
-        jinja2 = Environment(loader=FileSystemLoader("templates"))
-        #add the globals to jinja
-        # jinja2.globals.update(zip=zip)
-        page_tmpl = jinja2.get_template("mobi/page.html")
-
         #got all the images, begin processing
+        page_tmpl = jinja_template("mobi/page.html")
         thumb_pages = []
         for thumb_name in self.THUMBS.iterkeys():
             for i, data in enumerate(results):
@@ -125,6 +127,12 @@ class KindlePipeline(MangaImagesPipeline):
                 thumb_pages.append(
                     self.write_image_page(thumb_name, i, fname, page_tmpl)
                 )
+
+        #write the data out to the chapters file
+        with open("chapters.json", "a") as chapters_file:
+            chapters_file.write("%s\n" % json.dumps(dict(item=dict(item),
+                                                         results=thumb_pages)))
+
         return item
 
     def write_image_page(self, thumb_name, thumb_no, fname, tmpl):
