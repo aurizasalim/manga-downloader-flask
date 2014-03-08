@@ -32,6 +32,7 @@ nosetests.xml
 
 # Mr Developer
 *.db
+*.mobi
 env/
 .scrapy/
 images/

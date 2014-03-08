@@ -3,6 +3,8 @@ from flask.views import View
 
 import datetime
 import json
+import os
+import subprocess
 import tempfile
 
 from app import app, db
@@ -108,10 +110,11 @@ class DownloadChapterView(View):
         #crawler
         #TODO: groupby crawler
         chapters = request.json
-        manga_name = "manga_name"
+        manga_name = chapters[0]["manga_name"]
         self.write_images_html(chapters)
         self.write_ncx(manga_name)
         self.write_opf(manga_name)
+        self.write_mobi(manga_name)
 
         #TODO: update last_updated timestamp for manga object
         return "success"
@@ -164,11 +167,23 @@ class DownloadChapterView(View):
                 chapter_data = json.loads(line)
                 context["chapters"].append({
                     "name": chapter_data["item"]["chapter_name"],
-                    "pages": chapter_data["results"]
+                    "pages": chapter_data["results"],
                 })
 
         with open("images/%s.opf" % manga_name, "w") as fp:
             fp.write(opf_tmpl.render(context))
+
+    def write_mobi(self, manga_name):
+        #create the large mobi file with kindlegen named output.mobi
+        opf = os.path.abspath("images/%s.opf" % manga_name)
+
+        #run kindlegen
+        subprocess.call(["kindlegen", "-c2", opf, "-o", "output.mobi"])
+
+        #use kindlestrip to minimize file size
+        subprocess.call(["python", "kindlestrip.py", "images/output.mobi",
+                         "%s.mobi" % manga_name])
+
 
 app.add_url_rule('/manga/download/',
                  view_func=DownloadChapterView.as_view('manga_download'))

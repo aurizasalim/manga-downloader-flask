@@ -9,12 +9,12 @@
 	</head>
     <docTitle><text>{{ manga_name }}</text></docTitle>
     {#<docAuthor><text>Walter Crane</text></docAuthor>#}
-    {% for chapter in chapters %}
 	<navMap>
+        {% for chapter in chapters %}
         <navPoint class="other" id="cover_{{ loop.index }}" playOrder="{{ loop.index }}">
             <navLabel><text>{{ chapter.name }}</text></navLabel>
             <content src="{{ chapter.cover }}"/>
 		</navPoint>
+        {% endfor %}
 	</navMap>
-    {% endfor %}
 </ncx>

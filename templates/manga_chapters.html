@@ -105,7 +105,7 @@
                 type: "POST",
                 url: form.prop("action"),
                 contentType: 'application/json;charset=UTF-8',
-                data: JSON.stringify(selected_chapters),
+                data: JSON.stringify(selected_chapters.reverse()),
                 dataType: "html",
                 success: function() { render_spinner(false); },
                 error: function() {

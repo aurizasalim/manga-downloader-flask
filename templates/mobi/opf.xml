@@ -3,44 +3,25 @@
 	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
         <dc:title>{{ manga_name }}</dc:title>
 		<dc:language>en-US</dc:language>
-        {#
-		<dc:identifier id="PrimaryID" opf:scheme="ISBN">ISBN</dc:identifier>
-		<dc:creator opf:role="aut" opf:file-as="Walter Crane">Walter Crane</dc:creator>
-		<dc:publisher>Publisher</dc:publisher>
-		<dc:date opf:event="publication">2012</dc:date>
-		<dc:rights>Copyright &#x00A9; 2012 by Publisher</dc:rights>
-		<meta name="cover" content="my_cover_image"/>
-        #}
         <meta name="book-type" content="comic"/>
 		<meta name="zero-gutter" content="true"/>
 		<meta name="zero-margin" content="true"/>
-        {#
-		<meta name="RegionMagnification" content="true"/>
-        #}
+        {# <meta name="RegionMagnification" content="true"/> #}
         <meta name="fixed-layout" content="true"/>
         <meta name="orientation-lock" content="portrait"/>
-        {#
-        <meta name="original-resolution" content="600x733"/>
-        #}
 	</metadata>
 	<manifest>
+        <item id="ncx" href="{{ manga_name }}.ncx" media-type="application/x-dtbncx+xml"/>
         {% for chapter in chapters %}
             {% set chapter_loop = loop %}
             {% for page in chapter.pages %}
-                <item id="chapter_{{ chapter_loop }}_{{ loop.index }}" href="{{ page }}" media-type="application/xhtml+xml"/>
+                <item id="chapter_{{ chapter_loop.index }}_{{ loop.index }}" href="{{ page }}" media-type="application/xhtml+xml"/>
             {% endfor %}
         {% endfor %}
 	</manifest>
 	<spine toc="ncx">
         {% for chapter in chapters %}
-            {% for page in chapter.pages %}
             <itemref idref="chapter_{{ loop.index }}_1" />
-            {% endfor %}
         {% endfor %}
 	</spine>
-    {#
-	<guide>
-		<reference type="start" title="Start Reading" href="cover.html"/>
-	</guide>
-    #}
 </package>
