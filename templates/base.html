@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="mangaApp">
     <head>
         <title>Manga Downloader - {% block title %}{% endblock title %}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Angular JS -->
+        <script src="/static/js/angular.min.js"></script>
         <!-- Bootstrap -->
         <link href="/static/css/bootstrap.min.css" rel="stylesheet">
         <!-- Custom css -->
@@ -51,7 +53,17 @@
         <script src="/static/js/bootstrap.min.js"></script>
         <script src="/static/js/spin.min.js"></script>
         <script src="/static/js/jquery.spin.js"></script>
+
         <script>
+            // AngularJS setup and overwrites
+            /*
+            var manga_app = angular.module('manga_app').config(function($interpolateProvider) {
+                $interpolateProvider.startSymbol('[[');
+                $interpolateProvider.endSymbol(']]');
+            });
+            */
+
+
             window.render_spinner = function (start) {
                 var elem = $("div.container");
                 var $spinner;
@@ -81,6 +93,9 @@
                 {% block extrajs %}
                 {% endblock extrajs %}
             });
+
+            {% block angularjs %}
+            {% endblock angularjs %}
         </script>
     </body>
 </html>

@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 
@@ -43,3 +44,41 @@ def jinja_template(template_path, **kwargs):
     #add the globals to jinja
     jinja2.globals.update(**kwargs)
     return jinja2.get_template(template_path)
+
+
+def strip_punctuation(s):
+    """strips the punctuation from the given string"""
+    return re.sub(ur"\p{P}+", "", s)
+
+
+def chapter_number(manga_name, chapter_name):
+    """returns the chapter number as a int, float or string"""
+    manga_name = strip_punctuation(manga_name).lower().split()
+    chapter_name = strip_punctuation(chapter_name).lower().split()
+
+    number = chapter_name[len(manga_name):]
+    if len(number) == 1:
+        number = float(number[0])
+        if int(number) == number:
+            return int(number)
+        else:
+            return number
+    else:
+        #textual name or special chapter
+        return ' '.join(chapter_name.split()[len(manga_name):])
+
+
+def chapter_number_sort_key(manga_name, chapter_name):
+    """
+    returns a tuple of (chapter_number, chapter_string)
+
+    if the chapter_number is valid,
+    chapter_number is a int / float, chapter_string is ""
+    if not,
+    chapter_number is -1, chapter_string is the textual name
+    """
+    chap_num = chapter_number(manga_name, chapter_name)
+    if isinstance(chap_num, basestring):
+        return (chap_num, "")
+    else:
+        return (-1, chap_num)

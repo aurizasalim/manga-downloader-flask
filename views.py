@@ -9,7 +9,7 @@ import tempfile
 
 from app import app, db
 from models import Manga
-from utils import run_crawler, jinja_template
+from utils import run_crawler, jinja_template, chapter_number_sort_key
 
 
 MANGA_SOURCES = ["MangaReader", "MangaHere", "AnimeA", "KissManga"]
@@ -79,8 +79,8 @@ def manga_chapters(manga_id):
 
     chapters = []
     chap_list = sorted(chap_list,
-                       key=lambda c: (int(c["date"]), c["name"]),
-                       reverse=True)
+                key=lambda c: chapter_number_sort_key(manga.name, c["name"]),
+                reverse=True)
 
     #context for json data that will be submitted later
     json_data = [dict(c, manga_id=manga_id, manga_site=manga.mangasite,
@@ -135,21 +135,29 @@ class DownloadChapterView(View):
             crawler_name = "%s_images" % mangasite.lower()
             run_crawler(crawler_name, chapter_data_file=fp.name)
 
+    def read_chapters_json(self, manga_name):
+        """
+        reads the chapters.json file and returns the chapters in chronological
+        order
+        """
+        chapters = [json.loads(x) for x in open("chapters.json")]
+        return sorted(chapters,
+            key=lambda c: chapter_number_sort_key(manga_name,
+                                                  c["item"]["chapter_name"]))
+
     def write_ncx(self, manga_name):
         """write the ncx file, using the data from chapters.json"""
         ncx_tmpl = jinja_template("mobi/ncx.xml")
-
         context = {
             "manga_name": manga_name,
             "chapters": [],
         }
-        with open("chapters.json") as fp:
-            for line in fp:
-                chapter_data = json.loads(line)
-                context["chapters"].append({
-                    "name": chapter_data["item"]["chapter_name"],
-                    "cover": chapter_data["results"][0]  # first page
-                })
+
+        for c in self.read_chapters_json(manga_name):
+            context["chapters"].append({
+                "name": c["item"]["chapter_name"],
+                "cover": c["results"][0]  # first page
+            })
 
         with open("images/%s.ncx" % manga_name, "w") as fp:
             fp.write(ncx_tmpl.render(context))
@@ -162,13 +170,11 @@ class DownloadChapterView(View):
             "manga_name": manga_name,
             "chapters": [],
         }
-        with open("chapters.json") as fp:
-            for line in fp:
-                chapter_data = json.loads(line)
-                context["chapters"].append({
-                    "name": chapter_data["item"]["chapter_name"],
-                    "pages": chapter_data["results"],
-                })
+        for c in self.read_chapters_json(manga_name):
+            context["chapters"].append({
+                "name": c["item"]["chapter_name"],
+                "pages": c["results"],
+            })
 
         with open("images/%s.opf" % manga_name, "w") as fp:
             fp.write(opf_tmpl.render(context))

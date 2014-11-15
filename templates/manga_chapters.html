@@ -3,118 +3,107 @@
 {% block title %}{{ manga.name }}{% endblock title %}
 
 {% block body %}
-    <form id="download_manga_form" action="/manga/download/" method="post">
+    <form id="download_manga_form" action="/manga/download/" method="post" ng-controller="ChapterCtrl" ng-submit="submit_form($event)">
         <div class="row">
             <h3 class="pull-left" style="margin-top:10px">{{ manga.name }}</h3>
-            <input type="submit" class="btn btn-primary pull-right" value="Download">
+            <input type="submit" class="btn btn-primary pull-right" value="Add to Queue">
         </div>
 
         <table class="table table-striped table-bordered table-hover table-condensed">
             <thead>
                 <tr>
-                    <th style="text-align:center"><input type="checkbox"></th>
+                    <th class="text-center">
+                        <input type="checkbox" ng-model="select_all" ng-click="check_all()">
+                    </th>
                     <th><strong>Name</strong></th>
                     <th><strong>Date</strong></th>
                 </tr>
             </thead>
             <tbody>
-                {% for chapter in chapters %}
-                    <tr>
-                        <td style="text-align:center">
-                            <input type="checkbox" name="selected_chapters" value="{{ chapter.link }}">
-                        </td>
-                        <td>
-                            {{ chapter.name }}
-                        </td>
-                        <td>
-                            {{ chapter.date.strftime('%d %b %Y') }}
-                        </td>
-                    </tr>
-                {% endfor %}
+                {% raw %}
+                <tr ng-repeat="chapter in chapters">
+                    <td class="text-center">
+                        <input type="checkbox" name="selected_chapters" ng-model="chapter.selected" ng-click="check_chapter(chapter.selected, $index, $event)" value="{{ chapter.link }}">
+                    </td>
+                    <td>
+                        {{ chapter.name }}
+                    </td>
+                    <td>
+                        {{ chapter.date * 1000 | date:'dd MMM yyyy' }}
+                    </td>
+                </tr>
+                {% endraw %}
             </tbody>
         </table>
 
         <div class="row">
-            <input type="submit" class="btn btn-primary pull-right" value="Download">
+            <input type="submit" class="btn btn-primary pull-right" value="Add to Queue">
         </div>
     </form>
 {% endblock body %}
 
 <script>
-{% block extrajs %}
-   var chapters = {{ json_data|tojson|safe }};
+{% block angularjs %}
+    var mangaApp = angular.module('mangaApp', []);
+    var chapters = {{ json_data|tojson|safe }};
 
-    //check and uncheck all
-    $("th input[type=checkbox]").click(function(e) {
-        var checked = $(e.currentTarget).prop("checked");
+    mangaApp.controller('ChapterCtrl', function($scope, $http) {
+        $scope.chapters = chapters;
+        $scope.last_checked = null;
 
-        $("table td input:checkbox").attr({checked: checked});
+        //check and uncheck all
+        $scope.check_all = function () {
+            $scope.select_all = !!$scope.select_all;
 
-        return $("table tbody tr").each(function(i, row) {
-            var $row = $(row);
-            return $row.toggleClass("selected", $row.find("input:checkbox").prop("checked"));
-        });
-    });
+            angular.forEach($scope.chapters, function (chapter) {
+                chapter.selected = $scope.select_all;
+            });
+        };
 
-    //handle shift clicking of checkboxes
-    var last_checked = null;
-    $("td input[type=checkbox]").click(function(e) {
-        var end, start, tr;
-        var elem = $(e.currentTarget);
-        var checked = elem.prop("checked");
-
-        if (last_checked == null) {
-            tr = elem.closest("tbody tr");
-            last_checked = tr.index();
-            tr.toggleClass("selected", checked);
-            return;
-        }
-
-        start = elem.closest("tbody tr").index();
-        if (e.shiftKey) {
-            end = last_checked;
-            $("table td input:checkbox").slice(Math.min(start, end), Math.max(start, end) + 1).attr({checked: checked});
-        }
-
-        last_checked = start;
-        return $("table tbody tr").each(function(i, row) {
-            var $row = $(row);
-            return $row.toggleClass("selected", $row.find("input:checkbox").prop("checked"));
-        });
-    });
-
-    //handle the form submission
-    $("#download_manga_form").submit(function(e) {
-        var form = $("#download_manga_form")
-        e.preventDefault();
-
-        //select the relevant chapters
-        var selected_chapters = []
-        $("table td input[type=checkbox]").each(function(idx, chkbox) {
-            if ($(chkbox).prop("checked")===true) {
-                selected_chapters.push(chapters[idx]);
+        //check and uncheck all
+        $scope.check_chapter = function (selected, idx, event) {
+            if ($scope.last_checked === null) {
+                $scope.last_checked = idx;
+                return
             }
-        });
 
-        //only do work if we need to
-        if (selected_chapters.length > 0) {
+            if (event.shiftKey) {
+                angular.forEach($scope.chapters.slice(
+                    Math.min(idx, $scope.last_checked),
+                    Math.max(idx, $scope.last_checked) + 1
+                ), function (chapter) {
+                    chapter.selected = true;
+                });
+            }
+            $scope.last_checked = idx;
+        };
+
+        // form submission
+        $scope.submit_form = function (e) {
+            e.preventDefault();
+
+            //select the relevant chapters
+            var selected_chapters = $scope.chapters.filter(function(chapter) {
+                return chapter.selected === true;
+            });
+
+            //only do work if we need to
+            if (selected_chapters.length === 0)
+                return
+
             render_spinner();
 
             //do the actual submission via a JSON post
-            $.ajax({
-                type: "POST",
-                url: form.prop("action"),
-                contentType: 'application/json;charset=UTF-8',
-                data: JSON.stringify(selected_chapters.reverse()),
-                dataType: "html",
-                success: function() { render_spinner(false); },
-                error: function() {
-                    console.error("FORM SUBMISSION ERROR");
-                    render_spinner(false);
-                }
+            $http.post(
+                $(e.currentTarget).prop("action"),
+                selected_chapters.reverse()
+            ).success(function(data) {
+                console.debug(data);
+            }).error(function() {
+                console.error("FORM SUBMISSION ERROR");
+                render_spinner(false);
             });
         }
     });
-
-{% endblock extrajs %}
+{% endblock angularjs %}
 </script>

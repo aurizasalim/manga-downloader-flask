@@ -30,8 +30,12 @@ class MangaImagesPipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
         image_urls = item.get(self.IMAGES_URLS_FIELD, [])
 
+        #we have all the image urls, sort and store the sorted order
+        if self.has_all_images(item):
+            image_urls = [x[1] for x in sorted(image_urls)]
+            item[self.IMAGES_URLS_FIELD] = image_urls
         #don't have all the images, don't bother
-        if not self.has_all_images(item):
+        else:
             image_urls = []
         return [Request(x) for x in image_urls]
 

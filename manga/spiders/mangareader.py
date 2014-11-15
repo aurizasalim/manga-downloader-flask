@@ -97,9 +97,11 @@ class MangaReaderImageSpider(Spider):
         item['image_urls'] = []
 
         #fetch the images from all the pages
-        for p in page_links:
+        for i, p in enumerate(page_links):
             page = urljoin_rfc(base_url, p)
             request = Request(page, callback=self.parse_img_url)
+            # pass the index of the image for reordering later
+            request.meta['index'] = i
             request.meta['item'] = item  # pass the item to the callback
             yield request
 
@@ -112,5 +114,6 @@ class MangaReaderImageSpider(Spider):
 
         #use the item passed to the callback
         item = response.meta['item']
-        item['image_urls'].append(img_url)
+        #image_urls is a list of tuples so we can sort it in order later
+        item['image_urls'].append((response.meta["index"], img_url))
         return item
