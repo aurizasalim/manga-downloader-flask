@@ -3,7 +3,7 @@ from urlparse import urljoin
 
 from app import db
 from models import Manga
-from utils import run_crawler
+from utils import run_spider
 
 #TODO: possible other sources: MangaDog, KissManga, MangaWall
 # chapter = namedtuple('chapter', 'text url date')
@@ -86,7 +86,7 @@ class MangaSource(object):
     #     return page.iter_links(self.manga_list_xpath)
 
     def fetch_mangas(self):
-        return run_crawler(self.__class__.__name__.lower())
+        return run_spider(self.__class__.__name__.lower())
 
     def get_mangas(self):
         """returns the list of mangas for this manga source"""

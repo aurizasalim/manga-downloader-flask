@@ -4,35 +4,38 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 
 
-def run_crawler(crawler_name, **kwargs):
+def run_spider(crawler_name, log=False, cache=True, **kwargs):
     """
-    runs the crawler of crawler_name with the given kwargs
-    returns a list of dicts of data
+    runs the given scraper and returns the fetched data as a list of dicts
     """
     outfile = "results.json"
-    #truncate the output file
-    open(outfile, 'w').close()
+    open(outfile, 'w').close()  # truncate the output file
 
-    #handle arguments if any are given
-    args = []
-    if kwargs:
-        args = ["-a"]
-        for k, v in kwargs.iteritems():
-            args.append("%s=%s" % (k, v))
+    cmd = ["scrapy", "crawl"]
+    if not log:
+        cmd.append("--nolog")
+    cmd.append(crawler_name)
 
-    cmd = ["scrapy", "crawl", crawler_name, "--nolog"] + args + \
-          ["-o", outfile, "-t", "jsonlines"]
+    # pass in extra keyword args as needed
+    for k, v in kwargs.iteritems():
+        cmd += ['-a', "%s=%s" % (k, v)]
 
-    # block until completion
+    # enable the cache if needed
+    if not cache:
+        cmd += ["--set", "HTTPCACHE_ENABLED=0"]
+
+    cmd += ["-t", "jsonlines", "-o", outfile]
+    # print " ".join(cmd)
+
     subprocess.call(cmd)
-
-    return [json.loads(x) for x in open(outfile)]
+    with open(outfile) as fp:
+        return [json.loads(line) for line in fp]
 
 
 def extract_link(link_node):
     """returns (text, href) of the given link node"""
-    return (link_node.xpath('text()').extract()[0],
-            link_node.xpath('@href').extract()[0])
+    return (link_node.xpath('text()').extract()[0].strip(),
+            link_node.xpath('@href').extract()[0].strip())
 
 
 def jinja_template(template_path, **kwargs):
@@ -41,7 +44,7 @@ def jinja_template(template_path, **kwargs):
     kwargs is a dict of globals to add to the templates
     """
     jinja2 = Environment(loader=FileSystemLoader("templates"))
-    #add the globals to jinja
+    # add the globals to jinja
     jinja2.globals.update(**kwargs)
     return jinja2.get_template(template_path)
 
@@ -64,7 +67,7 @@ def chapter_number(manga_name, chapter_name):
         else:
             return number
     else:
-        #textual name or special chapter
+        # textual name or special chapter
         return ' '.join(chapter_name.split()[len(manga_name):])
 
 

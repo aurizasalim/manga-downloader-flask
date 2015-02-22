@@ -9,7 +9,7 @@ import tempfile
 
 from app import app, db
 from models import Manga
-from utils import run_crawler, jinja_template, chapter_number_sort_key
+from utils import run_spider, jinja_template, chapter_number_sort_key
 
 
 MANGA_SOURCES = ["MangaReader", "MangaHere", "AnimeA", "KissManga"]
@@ -39,7 +39,7 @@ def show_site(manga_source_name):
 @app.route('/site/<manga_source_name>/update/')
 def update_site(manga_source_name):
     """displays all the manga available for a given source"""
-    manga_list = run_crawler(manga_source_name.lower())
+    manga_list = run_spider(manga_source_name.lower())
 
     orig = Manga.query.filter(Manga.mangasite == manga_source_name)
 
@@ -75,7 +75,7 @@ def manga_chapters(manga_id):
     manga = Manga.query.get(manga_id)
 
     crawler_name = "%s_chapter" % manga.mangasite.lower()
-    chap_list = run_crawler(crawler_name, manga_id=manga.id)
+    chap_list = run_spider(crawler_name, manga_id=manga.id)
 
     chapters = []
     chap_list = sorted(chap_list,
@@ -133,7 +133,7 @@ class DownloadChapterView(View):
             mangasite = chapters[0]["manga_site"]
             #start fetching the images
             crawler_name = "%s_images" % mangasite.lower()
-            run_crawler(crawler_name, chapter_data_file=fp.name)
+            run_spider(crawler_name, chapter_data_file=fp.name)
 
     def read_chapters_json(self, manga_name):
         """

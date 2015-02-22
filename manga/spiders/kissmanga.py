@@ -1,12 +1,11 @@
 from scrapy.http.request import Request
 from scrapy.selector import Selector
-from scrapy.spider import Spider
 from scrapy.utils.response import get_base_url
 from scrapy.utils.url import urljoin_rfc
 
 import datetime
 
-from models import Manga
+from .base import BaseSpider as Spider
 from manga.items import MangaItem, MangaChapterItem
 from utils import extract_link
 
@@ -18,15 +17,15 @@ class KissManga(Spider):
         "http://kissmanga.com/MangaList/"
     ]
 
-    def parse(self, response):
-        hxs = Selector(response)
+    def parse(self, resp):
+        hxs = Selector(resp)
 
-        #handle pagination recursively
-        base_url = get_base_url(response)
-        pagination = hxs.xpath("//ul[@class='pager']/li/a"
-                                "[contains(text(),'Next')]/@href").extract()
-        if pagination:
-            yield Request(urljoin_rfc(base_url, pagination[0]), self.parse)
+        # handle pagination recursively
+        base_url = get_base_url(resp)
+        for pagination in hxs.css("ul.pager a"):
+            txt, url = extract_link(pagination)
+            if txt.endswith("Next"):
+                yield Request(urljoin_rfc(base_url, url), self.parse)
 
         mangas = hxs.xpath("//table[@class='listing']/tr/td[1]/a")
 
@@ -40,18 +39,12 @@ class KissMangaChapterSpider(Spider):
     name = "kissmanga_chapter"
     allowed_domains = ["kissmanga.com"]
 
-    def __init__(self, manga_id):
-        base_url = "http://kissmanga.com"
-        self.start_urls = [
-            urljoin_rfc(base_url, Manga.query.get(int(manga_id)).link),
-        ]
-
-    #parses the date format
+    # parses the date format
     def parsedate(self, s):
         return datetime.datetime.strptime(s.strip(), "%m/%d/%Y").date()
 
-    def parse(self, response):
-        hxs = Selector(response)
+    def parse(self, resp):
+        hxs = Selector(resp)
 
         rows = hxs.xpath("//table[@class='listing']//tr")
         for row in rows:
